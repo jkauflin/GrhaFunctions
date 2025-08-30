@@ -25,43 +25,51 @@ public class SendMailTrigger
         //_logger.LogInformation("Event type: {type}, Event subject: {subject}", cloudEvent.Type, cloudEvent.Subject);
         _logger.LogWarning("Event type: {type}, Event subject: {subject}, Data: {data}", eventGridEvent.EventType, eventGridEvent.Subject, eventGridEvent.Data.ToString());
 
-/*
-using Azure.Communication.Email;
+        string data = eventGridEvent.Data.ToString();
+        if (data.Contains("R72617504 0029"))
+        {
+            throw new Exception("*** JJK test exception ***");
+        }
 
-[ApiController]
-[Route("api/[controller]")]
-public class EmailController : ControllerBase
-{
-    private readonly EmailClient _emailClient;
+        
 
-    public EmailController(IConfiguration config)
-    {
-        string connectionString = config["ACS:EmailConnectionString"];
-        _emailClient = new EmailClient(connectionString);
-    }
+        /*
+        using Azure.Communication.Email;
 
-    [HttpPost("send")]
-    public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
-    {
-        var emailMessage = new EmailMessage(
-            senderAddress: "noreply@yourdomain.com",
-            recipientAddress: request.To,
-            subject: request.Subject,
-            body: request.Body
-        );
+        [ApiController]
+        [Route("api/[controller]")]
+        public class EmailController : ControllerBase
+        {
+            private readonly EmailClient _emailClient;
 
-        await _emailClient.SendAsync(emailMessage);
-        return Ok("Email sent successfully.");
-    }
-}
+            public EmailController(IConfiguration config)
+            {
+                string connectionString = config["ACS:EmailConnectionString"];
+                _emailClient = new EmailClient(connectionString);
+            }
 
-public class EmailRequest
-{
-    public string To { get; set; }
-    public string Subject { get; set; }
-    public string Body { get; set; }
-}
-*/
+            [HttpPost("send")]
+            public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
+            {
+                var emailMessage = new EmailMessage(
+                    senderAddress: "noreply@yourdomain.com",
+                    recipientAddress: request.To,
+                    subject: request.Subject,
+                    body: request.Body
+                );
+
+                await _emailClient.SendAsync(emailMessage);
+                return Ok("Email sent successfully.");
+            }
+        }
+
+        public class EmailRequest
+        {
+            public string To { get; set; }
+            public string Subject { get; set; }
+            public string Body { get; set; }
+        }
+        */
 
 
 
