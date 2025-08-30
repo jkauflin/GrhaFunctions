@@ -26,7 +26,8 @@ public class SendMailTrigger
         _logger.LogWarning("Event type: {type}, Event subject: {subject}, Data: {data}", eventGridEvent.EventType, eventGridEvent.Subject, eventGridEvent.Data.ToString());
 
         string data = eventGridEvent.Data.ToString();
-        if (data.Contains("R72617504 0029"))
+        //if (data.Contains("R72617504 0029"))
+        if (data.Contains("R72617504"))
         {
             throw new Exception("*** JJK test exception ***");
         }
