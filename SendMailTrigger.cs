@@ -27,7 +27,7 @@ public class SendMailTrigger
 
         string data = eventGridEvent.Data.ToString();
         //if (data.Contains("R72617504 0029"))
-        if (data.Contains("R72617504"))
+        if (1 == 1)
         {
             throw new Exception("*** JJK test exception ***");
         }
