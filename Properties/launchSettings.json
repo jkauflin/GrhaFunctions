@@ -2,7 +2,7 @@
   "profiles": {
     "GrhaFunctions": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7044",
+      "commandLineArgs": "--port 7071",
       "launchBrowser": false
     }
   }

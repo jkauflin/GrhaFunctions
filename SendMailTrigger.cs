@@ -18,21 +18,17 @@ public class SendMailTrigger
         _logger = logger;
     }
 
-    [Function(nameof(SendMailTrigger))]
-    //public void Run([EventGridTrigger] CloudEvent cloudEvent)
+
+    [Function("SendMailTrigger")]
     public void Run([EventGridTrigger] EventGridEvent eventGridEvent)
     {
-        //_logger.LogInformation("Event type: {type}, Event subject: {subject}", cloudEvent.Type, cloudEvent.Subject);
-        _logger.LogWarning("Event type: {type}, Event subject: {subject}, Data: {data}", eventGridEvent.EventType, eventGridEvent.Subject, eventGridEvent.Data.ToString());
+        string parcelId = eventGridEvent.Data.ToObjectFromJson<string>();
+        _logger.LogWarning($"Event type: {eventGridEvent.EventType}, subject: {eventGridEvent.Subject}, parcelId: {parcelId}");
 
-        string data = eventGridEvent.Data.ToString();
-        //if (data.Contains("R72617504 0029"))
-        if (1 == 1)
+        if (parcelId.Contains("R72617504 0029"))
         {
-            throw new Exception("*** JJK test exception ***");
+            throw new Exception("*** JJK test exception for R72617504 0029 ***");
         }
-
-        
 
         /*
         using Azure.Communication.Email;
