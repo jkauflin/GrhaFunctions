@@ -49,6 +49,8 @@ namespace GrhaWeb.Function
         private readonly string databaseId;
         private readonly string? grhaSendEmailEventTopicEndpoint;
         private readonly string? grhaSendEmailEventTopicKey;
+        private readonly string? acsEmailConnStr;  // Your ACS Email connection string from the Azure portal
+        private readonly string? acsEmailSenderAddress; 
         private readonly CommonUtil util;
 
         public HoaDbCommon(ILogger logger, IConfiguration configuration)
@@ -60,36 +62,82 @@ namespace GrhaWeb.Function
             databaseId = "hoadb";
             grhaSendEmailEventTopicEndpoint = config["GRHA_SENDMAIL_EVENT_TOPIC_ENDPOINT"];
             grhaSendEmailEventTopicKey = config["GRHA_SENDMAIL_EVENT_TOPIC_KEY"];
+            acsEmailConnStr = config["ACS_EMAIL_CONN_STR"];
+            acsEmailSenderAddress = config["ACS_EMAIL_SENDER_ADDRESS"];
             util = new CommonUtil(log);
         }
 
-        public async Task<string> CreateAndSend(DuesEmailEvent duesEmailEvent)
+        public async Task<string> SendEmailandUpdateRecs(DuesEmailEvent duesEmailEvent)
         {
             string returnMessage = "";
 
-            // Your ACS Email connection string from the Azure portal
-            string connectionString = "<your_connection_string>";
+
+            string containerId = "hoa_communications";
+            CosmosClient cosmosClient = new CosmosClient(apiCosmosDbConnStr);
+            Database db = cosmosClient.GetDatabase(databaseId);
+            Container container = db.GetContainer(containerId);
+            DateTime currDateTime = DateTime.Now;
+            string LastChangedTs = currDateTime.ToString("o");
+
+            var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
+
+            /* If I do a scheduled background process then it will use the email address list
+            *** but for this just use the email sent in the Event
+            foreach (var emailAddr in hoaRec.emailAddrList)
+            {
+            }
+            */
+
+
+/*
+                    // Create a metadata object from the media file information
+                    hoa_communications hoa_comm = new hoa_communications
+                    {
+                        id = commId,
+                        Parcel_ID = hoaRec.property.Parcel_ID,
+                        CommID = 9999,
+                        CreateTs = currDateTime,
+                        OwnerID = hoaRec.property.OwnerID,
+                        CommType = "Dues Notice",
+                        CommDesc = "Sent to Owner email",
+                        Mailing_Name = hoaRec.property.Mailing_Name,
+                        Email = 1,
+                        EmailAddr = emailAddr,
+                        SentStatus = "N",
+                        LastChangedBy = userName,
+                        LastChangedTs = currDateTime
+                    };
+
+                    // Insert a new doc, or update an existing one
+                    await container.CreateItemAsync(hoa_comm, new PartitionKey(hoa_comm.Parcel_ID));
+*/
+
+
+
+
 
             // Create the EmailClient
-            var emailClient = new EmailClient(connectionString);
+            var emailClient = new EmailClient(acsEmailConnStr);
 
             // Build the email content
-            var emailContent = new EmailContent("Subject")
+            var emailContent = new EmailContent("Test Subject")
             {
                 PlainText = "This is the plain text body.",
                 Html = "<strong>This is the HTML body.</strong>"
             };
 
+            //parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
+            //new EmailAddress(duesEmailEvent.emailAddr)
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("someone@example.com")
+                    new EmailAddress("johnkauflin@gmail.com")
                 }
             );
 
             // Create the message
             var emailMessage = new EmailMessage(
-                senderAddress: "no-reply@yourdomain.com", // must be from a verified domain in ACS
+                senderAddress: acsEmailSenderAddress, // must be from a verified domain in ACS
                 content: emailContent,
                 recipients: emailRecipients
             );
@@ -102,46 +150,78 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            Console.WriteLine($"Email send status: {result.Status}");
+
+            log.LogWarning($"Email send status: {result.Status}");
 
 
             return returnMessage;
         }
 
         /*
+        function createDuesMessage($conn,$Parcel_ID) {
+            $htmlMessageStr = '';
+            $title = 'Member Dues Notice';
+            $hoaName = getConfigValDB($conn,'hoaName');
 
-        [ApiController]
-        [Route("api/[controller]")]
-        public class EmailController : ControllerBase
-        {
-            private readonly EmailClient _emailClient;
+            // Current System datetime
+            $currSysDate = date_create();
+            // Get the current data for the property
+            $hoaRec = getHoaRec($conn,$Parcel_ID);
 
-            public EmailController(IConfiguration config)
-            {
-                string connectionString = config["ACS:EmailConnectionString"];
-                _emailClient = new EmailClient(connectionString);
+            $FY = 1991;
+            // *** just use the highest FY - the first assessment record ***
+            $result = $conn->query("SELECT MAX(FY) AS maxFY FROM hoa_assessments; ");
+            if ($result->num_rows > 0) {
+                while($row = $result->fetch_assoc()) {
+                    $FY = $row["maxFY"];
+                }
+            }
+            $result->close();
+
+            $noticeYear = (string) $hoaRec->assessmentsList[0]->FY - 1;
+            $noticeDate = date_format($currSysDate,"Y-m-d");
+
+            $htmlMessageStr .= '<b>' . $hoaName . '</b>' . '<br>';
+            $htmlMessageStr .= $title . " for Fiscal Year " . '<b>' . $FY . '</b>' . '<br>';
+            $htmlMessageStr .= '<b>For the Period:</b> Oct 1, ' . $noticeYear . ' thru Sept 30, ' . $FY . '<br><br>';
+
+            if (!$hoaRec->assessmentsList[0]->Paid) {
+                $htmlMessageStr .= '<b>Current Dues Amount: </b>$' . stringToMoney($hoaRec->assessmentsList[0]->DuesAmt) . '<br>';
+            }
+            //$htmlMessageStr .= '<b>Total Outstanding (as of ' . $noticeDate . ') :</b> $' . $hoaRec->TotalDue . '<br>';
+            $htmlMessageStr .= '<b>*****Total Outstanding:</b> $' . $hoaRec->TotalDue . ' (Includes fees, current & past dues)<br>';
+            //$htmlMessageStr .= '*** Includes fees, current & past dues *** <br>';
+            $htmlMessageStr .= '<b>Due Date: </b>' . 'October 1, ' . $noticeYear . '<br>';
+            $htmlMessageStr .= '<b>Dues must be paid to avoid a lien and lien fees </b><br><br>';
+
+            $htmlMessageStr .= '<b>Parcel Id: </b>' . $hoaRec->Parcel_ID . '<br>';
+            $htmlMessageStr .= '<b>Owner: </b>' . $hoaRec->ownersList[0]->Mailing_Name . '<br>';
+            $htmlMessageStr .= '<b>Location: </b>' . $hoaRec->Parcel_Location . '<br>';
+            $htmlMessageStr .= '<b>Phone: </b>' . $hoaRec->ownersList[0]->Owner_Phone . '<br>';
+            $htmlMessageStr .= '<b>Email: </b>' . $hoaRec->DuesEmailAddr . '<br>';
+            $htmlMessageStr .= '<b>Email2: </b>' . $hoaRec->ownersList[0]->EmailAddr2 . '<br>';
+
+            $htmlMessageStr .= '<h3><a href="' . getConfigValDB($conn,'duesUrl') . '">Click here to view Dues Statement or PAY online</a></h3>';
+            $htmlMessageStr .= '*** Online payment is for properties with ONLY current dues outstanding - if there are outstanding past dues or fees on the account, contact Treasurer for online payment options *** <br>';
+
+            $htmlMessageStr .= 'Send payment checks to:<br>';
+            $htmlMessageStr .= '<b>' . getConfigValDB($conn,'hoaNameShort') . '</b>' . '<br>';
+            $htmlMessageStr .= '<b>' . getConfigValDB($conn,'hoaAddress1') . '</b>' . '<br>';
+            $htmlMessageStr .= '<b>' . getConfigValDB($conn,'hoaAddress2') . '</b>' . '<br>';
+
+            $helpNotes = getConfigValDB($conn,'duesNotes');
+            if (!empty($helpNotes)) {
+                $htmlMessageStr .= '<br>' . $helpNotes . '<br>';
             }
 
-            [HttpPost("send")]
-            public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
-            {
-                var emailMessage = new EmailMessage(
-                    senderAddress: "noreply@yourdomain.com",
-                    recipientAddress: request.To,
-                    subject: request.Subject,
-                    body: request.Body
-                );
-
-                await _emailClient.SendAsync(emailMessage);
-                return Ok("Email sent successfully.");
-            }
+            return $htmlMessageStr;
         }
-
         */
 
 
 
-            // Common internal function to lookup configuration values
+
+        // Common internal function to lookup configuration values
         private async Task<string> getConfigVal(Container container, string configName)
         {
             string configVal = "";
