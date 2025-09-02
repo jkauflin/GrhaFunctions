@@ -34,6 +34,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Cosmos;
 using Azure;
 using Azure.Messaging.EventGrid;
+using Azure.Communication.Email;
 
 using GrhaWeb.Function.Model;
 
@@ -62,7 +63,85 @@ namespace GrhaWeb.Function
             util = new CommonUtil(log);
         }
 
-        // Common internal function to lookup configuration values
+        public async Task<string> CreateAndSend(DuesEmailEvent duesEmailEvent)
+        {
+            string returnMessage = "";
+
+            // Your ACS Email connection string from the Azure portal
+            string connectionString = "<your_connection_string>";
+
+            // Create the EmailClient
+            var emailClient = new EmailClient(connectionString);
+
+            // Build the email content
+            var emailContent = new EmailContent("Subject")
+            {
+                PlainText = "This is the plain text body.",
+                Html = "<strong>This is the HTML body.</strong>"
+            };
+
+            var emailRecipients = new EmailRecipients(
+                to: new List<EmailAddress>
+                {
+                    new EmailAddress("someone@example.com")
+                }
+            );
+
+            // Create the message
+            var emailMessage = new EmailMessage(
+                senderAddress: "no-reply@yourdomain.com", // must be from a verified domain in ACS
+                content: emailContent,
+                recipients: emailRecipients
+            );
+
+            // Send the email and wait until the operation completes
+            EmailSendOperation operation = await emailClient.SendAsync(
+                WaitUntil.Completed,
+                emailMessage
+            );
+
+            // Check the result
+            EmailSendResult result = operation.Value;
+            Console.WriteLine($"Email send status: {result.Status}");
+
+
+            return returnMessage;
+        }
+
+        /*
+
+        [ApiController]
+        [Route("api/[controller]")]
+        public class EmailController : ControllerBase
+        {
+            private readonly EmailClient _emailClient;
+
+            public EmailController(IConfiguration config)
+            {
+                string connectionString = config["ACS:EmailConnectionString"];
+                _emailClient = new EmailClient(connectionString);
+            }
+
+            [HttpPost("send")]
+            public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
+            {
+                var emailMessage = new EmailMessage(
+                    senderAddress: "noreply@yourdomain.com",
+                    recipientAddress: request.To,
+                    subject: request.Subject,
+                    body: request.Body
+                );
+
+                await _emailClient.SendAsync(emailMessage);
+                return Ok("Email sent successfully.");
+            }
+        }
+
+        */
+
+
+
+            // Common internal function to lookup configuration values
         private async Task<string> getConfigVal(Container container, string configName)
         {
             string configVal = "";

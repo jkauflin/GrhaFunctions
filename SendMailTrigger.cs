@@ -7,6 +7,8 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 
+using GrhaWeb.Function.Model;
+
 namespace GrhaWeb.Function;
 
 public class SendMailTrigger
@@ -24,15 +26,6 @@ public class SendMailTrigger
         hoaDbCommon = new HoaDbCommon(log, config);
     }
 
-    // data: new {id = commId, parcelId = hoa_comm.Parcel_ID, totalDue = hoaRec.totalDue, emailAddr = emailAddr}
-    public class DuesEmailEvent
-    {
-        public string? id { get; set; }   
-        public string? parcelId { get; set; }   
-	    public decimal totalDue { get; set; }       // amount = 1234.56m;
-        public string? emailAddr { get; set; }   
-    }
-
     [Function("SendMailTrigger")]
     public void Run([EventGridTrigger] EventGridEvent eventGridEvent)
     {
@@ -40,52 +33,17 @@ public class SendMailTrigger
         try
         {
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
+            //log.LogWarning($"Event type: {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
 
-            log.LogWarning($"Event type: {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
-
-            //hoaConfig = await hoaDbCommon.UpdateConfigDB(userName, configName, configDesc, configValue);
+            var returnMessage = hoaDbCommon.CreateAndSend(duesEmailEvent);
 
         }
         catch (Exception ex)
         {
             log.LogError($"Exception, message: {ex.Message} {ex.StackTrace}");
-            log.LogError($"Event type: {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
+            log.LogError($">>> Event type: {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
             throw new Exception(ex.Message);
         }
-
-
-
-        /*
-        using Azure.Communication.Email;
-
-        [ApiController]
-        [Route("api/[controller]")]
-        public class EmailController : ControllerBase
-        {
-            private readonly EmailClient _emailClient;
-
-            public EmailController(IConfiguration config)
-            {
-                string connectionString = config["ACS:EmailConnectionString"];
-                _emailClient = new EmailClient(connectionString);
-            }
-
-            [HttpPost("send")]
-            public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
-            {
-                var emailMessage = new EmailMessage(
-                    senderAddress: "noreply@yourdomain.com",
-                    recipientAddress: request.To,
-                    subject: request.Subject,
-                    body: request.Body
-                );
-
-                await _emailClient.SendAsync(emailMessage);
-                return Ok("Email sent successfully.");
-            }
-        }
-
-        */
 
 
         /*
