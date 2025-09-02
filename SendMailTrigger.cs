@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 
 using GrhaWeb.Function.Model;
+using System.Threading.Tasks;
 
 namespace GrhaWeb.Function;
 
@@ -27,15 +28,15 @@ public class SendMailTrigger
     }
 
     [Function("SendMailTrigger")]
-    public void Run([EventGridTrigger] EventGridEvent eventGridEvent)
+    public async Task Run([EventGridTrigger] EventGridEvent eventGridEvent)
     {
         DuesEmailEvent duesEmailEvent = new DuesEmailEvent();
         try
         {
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
             //log.LogWarning($"{eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
-            var returnMessage = hoaDbCommon.SendEmailandUpdateRecs(duesEmailEvent);
-            log.LogInformation(returnMessage.ToString());
+            var returnMessage = await hoaDbCommon.SendEmailandUpdateRecs(duesEmailEvent);
+            log.LogWarning(returnMessage);
         }
         catch (Exception ex)
         {

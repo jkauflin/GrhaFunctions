@@ -142,6 +142,7 @@ namespace GrhaWeb.Function
                 patchArray
             );
 
+            returnMessage = "Successfully sent email and updated comm rec";
             return returnMessage;
         }
 
