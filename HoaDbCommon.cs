@@ -71,7 +71,6 @@ namespace GrhaWeb.Function
         {
             string returnMessage = "";
 
-
             string containerId = "hoa_communications";
             CosmosClient cosmosClient = new CosmosClient(apiCosmosDbConnStr);
             Database db = cosmosClient.GetDatabase(databaseId);
@@ -79,7 +78,7 @@ namespace GrhaWeb.Function
             DateTime currDateTime = DateTime.Now;
             string LastChangedTs = currDateTime.ToString("o");
 
-            var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
+            //var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
 
             /* If I do a scheduled background process then it will use the email address list
             *** but for this just use the email sent in the Event
@@ -87,34 +86,6 @@ namespace GrhaWeb.Function
             {
             }
             */
-
-
-/*
-                    // Create a metadata object from the media file information
-                    hoa_communications hoa_comm = new hoa_communications
-                    {
-                        id = commId,
-                        Parcel_ID = hoaRec.property.Parcel_ID,
-                        CommID = 9999,
-                        CreateTs = currDateTime,
-                        OwnerID = hoaRec.property.OwnerID,
-                        CommType = "Dues Notice",
-                        CommDesc = "Sent to Owner email",
-                        Mailing_Name = hoaRec.property.Mailing_Name,
-                        Email = 1,
-                        EmailAddr = emailAddr,
-                        SentStatus = "N",
-                        LastChangedBy = userName,
-                        LastChangedTs = currDateTime
-                    };
-
-                    // Insert a new doc, or update an existing one
-                    await container.CreateItemAsync(hoa_comm, new PartitionKey(hoa_comm.Parcel_ID));
-*/
-
-
-
-
 
             // Create the EmailClient
             var emailClient = new EmailClient(acsEmailConnStr);
@@ -143,6 +114,7 @@ namespace GrhaWeb.Function
             );
 
             // Send the email and wait until the operation completes
+            /*
             EmailSendOperation operation = await emailClient.SendAsync(
                 WaitUntil.Completed,
                 emailMessage
@@ -150,9 +122,25 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
+            */
+            //log.LogWarning($"Email send status: {result.Status}");
 
-            log.LogWarning($"Email send status: {result.Status}");
+            // Initialize a list of PatchOperation (and default to setting the mandatory LastChanged fields)
+            List<PatchOperation> patchOperations = new List<PatchOperation>
+            {
+                PatchOperation.Replace("/SentStatus", "Y"),
+                PatchOperation.Replace("/LastChangedBy", "SendMail"),
+                PatchOperation.Replace("/LastChangedTs", LastChangedTs)
+            };
 
+            // Convert the list to an array
+            PatchOperation[] patchArray = patchOperations.ToArray();
+
+            ItemResponse<dynamic> response = await container.PatchItemAsync<dynamic>(
+                duesEmailEvent.id,
+                new PartitionKey(duesEmailEvent.parcelId),
+                patchArray
+            );
 
             return returnMessage;
         }
