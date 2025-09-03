@@ -91,9 +91,9 @@ namespace GrhaWeb.Function
             var emailClient = new EmailClient(acsEmailConnStr);
 
             // Build the email content
-            var emailContent = new EmailContent("Test Subject")
+            var emailContent = new EmailContent("GRHA Dues Notice TEST")
             {
-                PlainText = "This is the plain text body.",
+                PlainText = "This is a test of new email sends. Parcel_ID = "+duesEmailEvent.parcelId,
                 Html = "<strong>This is the HTML body.</strong>"
             };
 
@@ -114,7 +114,6 @@ namespace GrhaWeb.Function
             );
 
             // Send the email and wait until the operation completes
-            /*
             EmailSendOperation operation = await emailClient.SendAsync(
                 WaitUntil.Completed,
                 emailMessage
@@ -122,7 +121,6 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            */
             //log.LogWarning($"Email send status: {result.Status}");
 
             // Initialize a list of PatchOperation (and default to setting the mandatory LastChanged fields)
@@ -142,7 +140,7 @@ namespace GrhaWeb.Function
                 patchArray
             );
 
-            returnMessage = "Successfully sent email and updated comm rec";
+            returnMessage = $"Successfully sent email and updated comm rec, Parcel_ID = {duesEmailEvent.parcelId}";
             return returnMessage;
         }
 
