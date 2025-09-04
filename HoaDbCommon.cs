@@ -145,6 +145,36 @@ namespace GrhaWeb.Function
         }
 
         /*
+
+GRHA Dues Notice
+
+Gander Road Homeowners Association
+Member Dues Notice for Fiscal Year 2026
+For the Period: Oct 1, 2025 thru Sept 30, 2026
+
+Current Dues Amount: $149
+*****Total Outstanding: $149 (Includes fees, current & past dues)
+Due Date: October 1, 2025
+Dues must be paid to avoid a lien and lien fees
+
+Parcel Id: R72617307 0001
+Owner: Rxxxxx
+Location: 6xxx xxxx
+Phone: (937) xxx-xxxx
+Email: xxx@att.net
+Email2:
+Click here to view Dues Statement or PAY online
+*** Online payment is for properties with ONLY current dues outstanding - if there are outstanding past dues or fees on the account, contact Treasurer for online payment options ***
+Send payment checks to:
+GRHA
+P.O. Box 24763
+Dayton, OH 45424-4763
+
+NOTE: All checks received before October 1st will be credited to your account on the day received but will be held for deposit until October 1st.
+Have Questions? Call our Treasurer, Roy Rossow, at 9xx-xxx-xxxx, or email at xxx
+
+
+
         function createDuesMessage($conn,$Parcel_ID) {
             $htmlMessageStr = '';
             $title = 'Member Dues Notice';
