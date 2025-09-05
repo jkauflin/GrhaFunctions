@@ -33,8 +33,10 @@ public class SendMailTrigger
         DuesEmailEvent duesEmailEvent = new DuesEmailEvent();
         try
         {
+            // De-serialize the JSON string from the Event into the DuesEmailEvent object
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
             //log.LogWarning($"{eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
+            log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
             var returnMessage = await hoaDbCommon.SendEmailandUpdateRecs(duesEmailEvent);
             log.LogWarning(returnMessage);
         }

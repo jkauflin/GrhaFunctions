@@ -79,36 +79,73 @@ namespace GrhaWeb.Function
             string LastChangedTs = currDateTime.ToString("o");
 
             //var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
+            // NO - get all the needed data into the Event data structure
 
-            /* If I do a scheduled background process then it will use the email address list
-            *** but for this just use the email sent in the Event
-            foreach (var emailAddr in hoaRec.emailAddrList)
-            {
-            }
+            string subject = $"{duesEmailEvent.hoaNameShort} Dues Notice";
+
+            /*
+                $message = (new Swift_Message($subject))
+                    ->setFrom([$fromTreasurerEmailAddress])
+                    ->setTo([$toEmail])
+                    ->setBody($messageStr);
             */
+
+            string htmlMessageStr = "";
+            string title = "Member Dues Notice";    // TEST?
+            //DateTime currSysDate = DateTime.Now;
+            //currSysDate.ToString("yyyy-MM-dd");
+            //$noticeDate = date_format($currSysDate,"Y-m-d");
+            string noticeYear = (duesEmailEvent.fy - 1).ToString();
+
+            htmlMessageStr = $"<b>{duesEmailEvent.hoaName}</b><br>";
+            htmlMessageStr += $"{title} for Fiscal Year <b>{duesEmailEvent.fy.ToString()}</b><br>";
+            htmlMessageStr += $"<b>For the Period:</b> Oct 1, {noticeYear} thru Sept 30, {duesEmailEvent.fy.ToString()}<br><br>";
+            if (duesEmailEvent.Paid != 1) {
+                htmlMessageStr += $"<b>Current Dues Amount: </b>${duesEmailEvent.DuesAmt}<br>";
+            }
+            htmlMessageStr += $"<b>*****Total Outstanding:</b> ${duesEmailEvent.totalDue} (Includes fees, current & past dues)<br>";
+            htmlMessageStr += $"<b>Due Date: </b>October 1, {noticeYear}<br>";
+            htmlMessageStr += $"<b>Dues must be paid to avoid a lien and lien fees </b><br><br>";
+
+            htmlMessageStr += $"<b>Parcel Id: </b>{duesEmailEvent.parcelId}<br>";
+            htmlMessageStr += $"<b>Owner: </b>{duesEmailEvent.mailingName}<br>";
+            htmlMessageStr += $"<b>Location: </b>{duesEmailEvent.parcelLocation}<br>";
+            htmlMessageStr += $"<b>Phone: </b>{duesEmailEvent.ownerPhone}<br>";
+            htmlMessageStr += $"<b>Email: </b>{duesEmailEvent.ownerEmail1}<br>";
+            htmlMessageStr += $"<b>Email2: </b>{duesEmailEvent.ownerEmail2}<br>";
+
+            htmlMessageStr += $"<h3><a href='{duesEmailEvent.duesUrl}'>Click here to view Dues Statement or PAY online</a></h3>";
+            htmlMessageStr += $"*** Online payment is for properties with ONLY current dues outstanding - if there are outstanding past dues or fees on the account, contact Treasurer for online payment options *** <br>";
+
+            htmlMessageStr += $"Send payment checks to:<br>";
+            htmlMessageStr += $"<b>{duesEmailEvent.hoaNameShort}</b><br>";
+            htmlMessageStr += $"<b>{duesEmailEvent.hoaAddress1}</b><br>";
+            htmlMessageStr += $"<b>{duesEmailEvent.hoaAddress2}</b><br>";
+
+            if (!String.IsNullOrEmpty(duesEmailEvent.helpNotes)) {
+                htmlMessageStr += $"<br>{duesEmailEvent.helpNotes}<br>";
+            }
 
             // Create the EmailClient
             var emailClient = new EmailClient(acsEmailConnStr);
 
             // Build the email content
-            var emailContent = new EmailContent("GRHA Dues Notice TEST")
+            var emailContent = new EmailContent(title)
             {
-                PlainText = "This is a test of new email sends. Parcel_ID = "+duesEmailEvent.parcelId,
-                Html = "<strong>This is the HTML body.</strong>"
+                Html = htmlMessageStr
             };
 
-            //parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
-            //new EmailAddress(duesEmailEvent.emailAddr)
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("johnkauflin@gmail.com")
+                    new EmailAddress(duesEmailEvent.emailAddr)
                 }
             );
 
             // Create the message
             var emailMessage = new EmailMessage(
                 senderAddress: acsEmailSenderAddress, // must be from a verified domain in ACS
+                // ->setFrom([$fromTreasurerEmailAddress]) ???????????????????????????????????? can I put a "name" in
                 content: emailContent,
                 recipients: emailRecipients
             );
@@ -123,6 +160,9 @@ namespace GrhaWeb.Function
             EmailSendResult result = operation.Value;
             //log.LogWarning($"Email send status: {result.Status}");
 
+            //----------------------------------------------------------------------------------------------------------------
+            // Update the status of the Communications record indicating that the email has been SENT
+            //----------------------------------------------------------------------------------------------------------------
             // Initialize a list of PatchOperation (and default to setting the mandatory LastChanged fields)
             List<PatchOperation> patchOperations = new List<PatchOperation>
             {
@@ -145,7 +185,6 @@ namespace GrhaWeb.Function
         }
 
         /*
-
 GRHA Dues Notice
 
 Gander Road Homeowners Association
@@ -172,70 +211,7 @@ Dayton, OH 45424-4763
 
 NOTE: All checks received before October 1st will be credited to your account on the day received but will be held for deposit until October 1st.
 Have Questions? Call our Treasurer, Roy Rossow, at 9xx-xxx-xxxx, or email at xxx
-
-
-
-        function createDuesMessage($conn,$Parcel_ID) {
-            $htmlMessageStr = '';
-            $title = 'Member Dues Notice';
-            $hoaName = getConfigValDB($conn,'hoaName');
-
-            // Current System datetime
-            $currSysDate = date_create();
-            // Get the current data for the property
-            $hoaRec = getHoaRec($conn,$Parcel_ID);
-
-            $FY = 1991;
-            // *** just use the highest FY - the first assessment record ***
-            $result = $conn->query("SELECT MAX(FY) AS maxFY FROM hoa_assessments; ");
-            if ($result->num_rows > 0) {
-                while($row = $result->fetch_assoc()) {
-                    $FY = $row["maxFY"];
-                }
-            }
-            $result->close();
-
-            $noticeYear = (string) $hoaRec->assessmentsList[0]->FY - 1;
-            $noticeDate = date_format($currSysDate,"Y-m-d");
-
-            $htmlMessageStr .= '<b>' . $hoaName . '</b>' . '<br>';
-            $htmlMessageStr .= $title . " for Fiscal Year " . '<b>' . $FY . '</b>' . '<br>';
-            $htmlMessageStr .= '<b>For the Period:</b> Oct 1, ' . $noticeYear . ' thru Sept 30, ' . $FY . '<br><br>';
-
-            if (!$hoaRec->assessmentsList[0]->Paid) {
-                $htmlMessageStr .= '<b>Current Dues Amount: </b>$' . stringToMoney($hoaRec->assessmentsList[0]->DuesAmt) . '<br>';
-            }
-            //$htmlMessageStr .= '<b>Total Outstanding (as of ' . $noticeDate . ') :</b> $' . $hoaRec->TotalDue . '<br>';
-            $htmlMessageStr .= '<b>*****Total Outstanding:</b> $' . $hoaRec->TotalDue . ' (Includes fees, current & past dues)<br>';
-            //$htmlMessageStr .= '*** Includes fees, current & past dues *** <br>';
-            $htmlMessageStr .= '<b>Due Date: </b>' . 'October 1, ' . $noticeYear . '<br>';
-            $htmlMessageStr .= '<b>Dues must be paid to avoid a lien and lien fees </b><br><br>';
-
-            $htmlMessageStr .= '<b>Parcel Id: </b>' . $hoaRec->Parcel_ID . '<br>';
-            $htmlMessageStr .= '<b>Owner: </b>' . $hoaRec->ownersList[0]->Mailing_Name . '<br>';
-            $htmlMessageStr .= '<b>Location: </b>' . $hoaRec->Parcel_Location . '<br>';
-            $htmlMessageStr .= '<b>Phone: </b>' . $hoaRec->ownersList[0]->Owner_Phone . '<br>';
-            $htmlMessageStr .= '<b>Email: </b>' . $hoaRec->DuesEmailAddr . '<br>';
-            $htmlMessageStr .= '<b>Email2: </b>' . $hoaRec->ownersList[0]->EmailAddr2 . '<br>';
-
-            $htmlMessageStr .= '<h3><a href="' . getConfigValDB($conn,'duesUrl') . '">Click here to view Dues Statement or PAY online</a></h3>';
-            $htmlMessageStr .= '*** Online payment is for properties with ONLY current dues outstanding - if there are outstanding past dues or fees on the account, contact Treasurer for online payment options *** <br>';
-
-            $htmlMessageStr .= 'Send payment checks to:<br>';
-            $htmlMessageStr .= '<b>' . getConfigValDB($conn,'hoaNameShort') . '</b>' . '<br>';
-            $htmlMessageStr .= '<b>' . getConfigValDB($conn,'hoaAddress1') . '</b>' . '<br>';
-            $htmlMessageStr .= '<b>' . getConfigValDB($conn,'hoaAddress2') . '</b>' . '<br>';
-
-            $helpNotes = getConfigValDB($conn,'duesNotes');
-            if (!empty($helpNotes)) {
-                $htmlMessageStr .= '<br>' . $helpNotes . '<br>';
-            }
-
-            return $htmlMessageStr;
-        }
-        */
-
-
+*/
 
 
         // Common internal function to lookup configuration values
