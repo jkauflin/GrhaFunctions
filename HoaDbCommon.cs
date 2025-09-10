@@ -78,8 +78,7 @@ namespace GrhaWeb.Function
             DateTime currDateTime = DateTime.Now;
             string LastChangedTs = currDateTime.ToString("o");
 
-            //var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
-            // NO - get all the needed data into the Event data structure
+            var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
 
             string subject = $"{duesEmailEvent.hoaNameShort} Dues Notice";
 
@@ -95,24 +94,36 @@ namespace GrhaWeb.Function
             //DateTime currSysDate = DateTime.Now;
             //currSysDate.ToString("yyyy-MM-dd");
             //$noticeDate = date_format($currSysDate,"Y-m-d");
-            string noticeYear = (duesEmailEvent.fy - 1).ToString();
+            string noticeYear = (hoaRec.assessmentsList[0].FY - 1).ToString();
+
+                    /*
+                    duesEmailEvent.mailingName = hoaRec.property.Mailing_Name;
+                    duesEmailEvent.parcelLocation = hoaRec.property.Parcel_Location;
+                    duesEmailEvent.ownerPhone = hoaRec.ownersList[0].Owner_Phone;
+                    duesEmailEvent.ownerEmail1 = hoaRec.ownersList[0].EmailAddr;
+                    duesEmailEvent.ownerEmail2 = hoaRec.ownersList[0].EmailAddr2;
+                    duesEmailEvent.fy = hoaRec.assessmentsList[0].FY;
+                    duesEmailEvent.DuesAmt = hoaRec.assessmentsList[0].DuesAmt;
+                    duesEmailEvent.Paid = hoaRec.assessmentsList[0].Paid;
+                    duesEmailEvent.totalDue = hoaRec.totalDue;
+                    */
 
             htmlMessageStr = $"<b>{duesEmailEvent.hoaName}</b><br>";
-            htmlMessageStr += $"{title} for Fiscal Year <b>{duesEmailEvent.fy.ToString()}</b><br>";
-            htmlMessageStr += $"<b>For the Period:</b> Oct 1, {noticeYear} thru Sept 30, {duesEmailEvent.fy.ToString()}<br><br>";
-            if (duesEmailEvent.Paid != 1) {
-                htmlMessageStr += $"<b>Current Dues Amount: </b>${duesEmailEvent.DuesAmt}<br>";
+            htmlMessageStr += $"{title} for Fiscal Year <b>{hoaRec.assessmentsList[0].FY.ToString()}</b><br>";
+            htmlMessageStr += $"<b>For the Period:</b> Oct 1, {noticeYear} thru Sept 30, {hoaRec.assessmentsList[0].FY.ToString()}<br><br>";
+            if (hoaRec.assessmentsList[0].Paid != 1) {
+                htmlMessageStr += $"<b>Current Dues Amount: </b>${hoaRec.assessmentsList[0].DuesAmt}<br>";
             }
-            htmlMessageStr += $"<b>*****Total Outstanding:</b> ${duesEmailEvent.totalDue} (Includes fees, current & past dues)<br>";
+            htmlMessageStr += $"<b>*****Total Outstanding:</b> ${hoaRec.totalDue} (Includes fees, current & past dues)<br>";
             htmlMessageStr += $"<b>Due Date: </b>October 1, {noticeYear}<br>";
             htmlMessageStr += $"<b>Dues must be paid to avoid a lien and lien fees </b><br><br>";
 
             htmlMessageStr += $"<b>Parcel Id: </b>{duesEmailEvent.parcelId}<br>";
-            htmlMessageStr += $"<b>Owner: </b>{duesEmailEvent.mailingName}<br>";
-            htmlMessageStr += $"<b>Location: </b>{duesEmailEvent.parcelLocation}<br>";
-            htmlMessageStr += $"<b>Phone: </b>{duesEmailEvent.ownerPhone}<br>";
-            htmlMessageStr += $"<b>Email: </b>{duesEmailEvent.ownerEmail1}<br>";
-            htmlMessageStr += $"<b>Email2: </b>{duesEmailEvent.ownerEmail2}<br>";
+            htmlMessageStr += $"<b>Owner: </b>{hoaRec.property.Mailing_Name}<br>";
+            htmlMessageStr += $"<b>Location: </b>{hoaRec.property.Parcel_Location}<br>";
+            htmlMessageStr += $"<b>Phone: </b>{hoaRec.ownersList[0].Owner_Phone}<br>";
+            htmlMessageStr += $"<b>Email: </b>{hoaRec.ownersList[0].EmailAddr}<br>";
+            htmlMessageStr += $"<b>Email2: </b>{hoaRec.ownersList[0].EmailAddr2}<br>";
 
             htmlMessageStr += $"<h3><a href='{duesEmailEvent.duesUrl}'>Click here to view Dues Statement or PAY online</a></h3>";
             htmlMessageStr += $"*** Online payment is for properties with ONLY current dues outstanding - if there are outstanding past dues or fees on the account, contact Treasurer for online payment options *** <br>";
@@ -138,9 +149,11 @@ namespace GrhaWeb.Function
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress(duesEmailEvent.emailAddr)
+                    new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
                 }
             );
+
+                    //new EmailAddress(duesEmailEvent.emailAddr)
 
             // Create the message
             var emailMessage = new EmailMessage(
