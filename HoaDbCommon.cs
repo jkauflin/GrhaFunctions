@@ -81,19 +81,8 @@ namespace GrhaWeb.Function
             var hoaRec = await GetHoaRec(duesEmailEvent.parcelId);
 
             string subject = $"{duesEmailEvent.hoaNameShort} Dues Notice";
-
-            /*
-                $message = (new Swift_Message($subject))
-                    ->setFrom([$fromTreasurerEmailAddress])
-                    ->setTo([$toEmail])
-                    ->setBody($messageStr);
-            */
-
             string htmlMessageStr = "";
-            string title = "Member Dues Notice";    // TEST?
-            //DateTime currSysDate = DateTime.Now;
-            //currSysDate.ToString("yyyy-MM-dd");
-            //$noticeDate = date_format($currSysDate,"Y-m-d");
+            string title = duesEmailEvent.hoaNameShort + " Member Dues Notice";    // TEST?
             string noticeYear = (hoaRec.assessmentsList[0].FY - 1).ToString();
 
                     /*
@@ -112,7 +101,7 @@ namespace GrhaWeb.Function
             htmlMessageStr += $"{title} for Fiscal Year <b>{hoaRec.assessmentsList[0].FY.ToString()}</b><br>";
             htmlMessageStr += $"<b>For the Period:</b> Oct 1, {noticeYear} thru Sept 30, {hoaRec.assessmentsList[0].FY.ToString()}<br><br>";
             if (hoaRec.assessmentsList[0].Paid != 1) {
-                htmlMessageStr += $"<b>Current Dues Amount: </b>${hoaRec.assessmentsList[0].DuesAmt}<br>";
+                htmlMessageStr += $"<b>Current Dues Amount: </b>{hoaRec.assessmentsList[0].DuesAmt}<br>";
             }
             htmlMessageStr += $"<b>*****Total Outstanding:</b> ${hoaRec.totalDue} (Includes fees, current & past dues)<br>";
             htmlMessageStr += $"<b>Due Date: </b>October 1, {noticeYear}<br>";
@@ -152,13 +141,11 @@ namespace GrhaWeb.Function
                     new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
                 }
             );
-
                     //new EmailAddress(duesEmailEvent.emailAddr)
 
             // Create the message
             var emailMessage = new EmailMessage(
                 senderAddress: acsEmailSenderAddress, // must be from a verified domain in ACS
-                // ->setFrom([$fromTreasurerEmailAddress]) ???????????????????????????????????? can I put a "name" in
                 content: emailContent,
                 recipients: emailRecipients
             );
@@ -171,7 +158,7 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            //log.LogWarning($"Email send status: {result.Status}");
+            log.LogWarning($"Email send status: {result.Status.ToString()}");
 
             //----------------------------------------------------------------------------------------------------------------
             // Update the status of the Communications record indicating that the email has been SENT

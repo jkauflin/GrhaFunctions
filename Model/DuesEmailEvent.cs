@@ -10,6 +10,7 @@ namespace GrhaWeb.Function.Model
         public string? id { get; set; }   
         public string? parcelId { get; set; }   
         public string? emailAddr { get; set; }   
+        /*
         public string? mailingName { get; set; }   
         public string? parcelLocation { get; set; }   
         public string? ownerPhone { get; set; }   
@@ -19,6 +20,7 @@ namespace GrhaWeb.Function.Model
         public string? DuesAmt { get; set; }
         public int Paid { get; set; }
 	    public decimal totalDue { get; set; }       // amount = 1234.56m;
+        */
         public string? hoaName { get; set; }   
         public string? hoaNameShort { get; set; }   
         public string? hoaAddress1 { get; set; }   
