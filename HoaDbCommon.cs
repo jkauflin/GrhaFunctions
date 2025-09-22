@@ -185,6 +185,19 @@ namespace GrhaWeb.Function
         }
 
         /*
+
+                        if ($sendMailSuccess) {
+                            $hoaPaymentRec->paidEmailSent = 'Y';
+                            if (!$stmt = $conn->prepare("UPDATE hoa_payments SET paidEmailSent=? WHERE Parcel_ID = ? AND FY = ? AND txn_id = ? ; ")) {
+                                    error_log("Update Payments Prepare failed: " . $stmt->errno . ", Error = " . $stmt->error . PHP_EOL, 3, LOG_FILE);
+                                    //echo "Prepare failed: (" . $stmt->errno . ") " . $stmt->error;
+                            }
+                            if (!$stmt->bind_param("ssis",$hoaPaymentRec->paidEmailSent,$parcelId,$fy,$txn_id)) {
+                                error_log("Update Assessment Bind failed: " . $stmt->errno . ", Error = " . $stmt->error . PHP_EOL, 3, LOG_FILE);
+                                //echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+
+
+
 GRHA Dues Notice
 
 Gander Road Homeowners Association
