@@ -27,6 +27,7 @@ Modification History
 --------------------------------------------------------------------------------
 2025-09-01 JJK  Copied from the GrhaWeb and modified for the functions 
                 needed for the GrhaFunctions
+2025-09-22 JJK  Added SendPaymentEmail function
 ================================================================================*/
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
@@ -84,18 +85,6 @@ namespace GrhaWeb.Function
             string htmlMessageStr = "";
             string title = duesEmailEvent.hoaNameShort + " Member Dues Notice";    // TEST?
             string noticeYear = (hoaRec.assessmentsList[0].FY - 1).ToString();
-
-                    /*
-                    duesEmailEvent.mailingName = hoaRec.property.Mailing_Name;
-                    duesEmailEvent.parcelLocation = hoaRec.property.Parcel_Location;
-                    duesEmailEvent.ownerPhone = hoaRec.ownersList[0].Owner_Phone;
-                    duesEmailEvent.ownerEmail1 = hoaRec.ownersList[0].EmailAddr;
-                    duesEmailEvent.ownerEmail2 = hoaRec.ownersList[0].EmailAddr2;
-                    duesEmailEvent.fy = hoaRec.assessmentsList[0].FY;
-                    duesEmailEvent.DuesAmt = hoaRec.assessmentsList[0].DuesAmt;
-                    duesEmailEvent.Paid = hoaRec.assessmentsList[0].Paid;
-                    duesEmailEvent.totalDue = hoaRec.totalDue;
-                    */
 
             htmlMessageStr = $"<b>{duesEmailEvent.hoaName}</b><br>";
             htmlMessageStr += $"{title} for Fiscal Year <b>{hoaRec.assessmentsList[0].FY.ToString()}</b><br>";
@@ -184,47 +173,74 @@ namespace GrhaWeb.Function
             return returnMessage;
         }
 
-        /*
+        public async Task<string> SendPaymentEmail(DuesEmailEvent duesEmailEvent)
+        {
+            string returnMessage = "";
 
-                        if ($sendMailSuccess) {
-                            $hoaPaymentRec->paidEmailSent = 'Y';
-                            if (!$stmt = $conn->prepare("UPDATE hoa_payments SET paidEmailSent=? WHERE Parcel_ID = ? AND FY = ? AND txn_id = ? ; ")) {
-                                    error_log("Update Payments Prepare failed: " . $stmt->errno . ", Error = " . $stmt->error . PHP_EOL, 3, LOG_FILE);
-                                    //echo "Prepare failed: (" . $stmt->errno . ") " . $stmt->error;
-                            }
-                            if (!$stmt->bind_param("ssis",$hoaPaymentRec->paidEmailSent,$parcelId,$fy,$txn_id)) {
-                                error_log("Update Assessment Bind failed: " . $stmt->errno . ", Error = " . $stmt->error . PHP_EOL, 3, LOG_FILE);
-                                //echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+            string containerId = "hoa_payments";
+            CosmosClient cosmosClient = new CosmosClient(apiCosmosDbConnStr);
+            Database db = cosmosClient.GetDatabase(databaseId);
+            Container container = db.GetContainer(containerId);
+            DateTime currDateTime = DateTime.UtcNow;
+            string LastChangedTs = currDateTime.ToString("o");
 
+            // Create the EmailClient
+            var emailClient = new EmailClient(acsEmailConnStr);
 
+            // Build the email content
+            var emailContent = new EmailContent(duesEmailEvent.mailSubject)
+            {
+                Html = duesEmailEvent.htmlMessage
+            };
 
-GRHA Dues Notice
+            var emailRecipients = new EmailRecipients(
+                to: new List<EmailAddress>
+                {
+                    new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
+                }
+            );
+                    //new EmailAddress(duesEmailEvent.emailAddr)
 
-Gander Road Homeowners Association
-Member Dues Notice for Fiscal Year 2026
-For the Period: Oct 1, 2025 thru Sept 30, 2026
+            // Create the message
+            var emailMessage = new EmailMessage(
+                senderAddress: acsEmailSenderAddress, // must be from a verified domain in ACS
+                content: emailContent,
+                recipients: emailRecipients
+            );
 
-Current Dues Amount: $149
-*****Total Outstanding: $149 (Includes fees, current & past dues)
-Due Date: October 1, 2025
-Dues must be paid to avoid a lien and lien fees
+            // Send the email and wait until the operation completes
+            EmailSendOperation operation = await emailClient.SendAsync(
+                WaitUntil.Completed,
+                emailMessage
+            );
 
-Parcel Id: R72617307 0001
-Owner: Rxxxxx
-Location: 6xxx xxxx
-Phone: (937) xxx-xxxx
-Email: xxx@att.net
-Email2:
-Click here to view Dues Statement or PAY online
-*** Online payment is for properties with ONLY current dues outstanding - if there are outstanding past dues or fees on the account, contact Treasurer for online payment options ***
-Send payment checks to:
-GRHA
-P.O. Box 24763
-Dayton, OH 45424-4763
+            // Check the result
+            EmailSendResult result = operation.Value;
+            log.LogWarning($"Email send status: {result.Status.ToString()}");
 
-NOTE: All checks received before October 1st will be credited to your account on the day received but will be held for deposit until October 1st.
-Have Questions? Call our Treasurer, Roy Rossow, at 9xx-xxx-xxxx, or email at xxx
-*/
+            //----------------------------------------------------------------------------------------------------------------
+            // Update the status of the Payment record indicating that the email has been SENT
+            //----------------------------------------------------------------------------------------------------------------
+            // Initialize a list of PatchOperation (and default to setting the mandatory LastChanged fields)
+            List<PatchOperation> patchOperations = new List<PatchOperation>
+            {
+                PatchOperation.Replace("/paidEmailSent", "Y"),
+                PatchOperation.Replace("/LastChangedTs", LastChangedTs)
+            };
+
+            // Convert the list to an array
+            PatchOperation[] patchArray = patchOperations.ToArray();
+
+            ItemResponse<dynamic> response = await container.PatchItemAsync<dynamic>(
+                duesEmailEvent.id,
+                new PartitionKey(duesEmailEvent.parcelId),
+                patchArray
+            );
+
+            returnMessage = $"Successfully sent email and updated payments rec, Parcel_ID = {duesEmailEvent.parcelId}";
+            return returnMessage;
+        }
+
 
 
         // Common internal function to lookup configuration values
