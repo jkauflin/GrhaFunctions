@@ -40,7 +40,7 @@ public class SendMailTrigger
             //log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
 
             bool paymentEmail = false;
-            if (string.IsNullOrEmpty(duesEmailEvent.mailType))
+            if (!string.IsNullOrEmpty(duesEmailEvent.mailType))
             {
                 if (duesEmailEvent.mailType.Equals("Payment"))
                 {
@@ -62,7 +62,7 @@ public class SendMailTrigger
         catch (Exception ex)
         {
             log.LogError("---------- DUES EMAIL FAILED ------------");
-            log.LogError($">>> {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, email: {duesEmailEvent.emailAddr}");
+            log.LogError($">>> {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, email: {duesEmailEvent.emailAddr}, type: {duesEmailEvent.mailType}");
             log.LogError($"Exception, message: {ex.Message} {ex.StackTrace}");
             throw new Exception(ex.Message);
         }
