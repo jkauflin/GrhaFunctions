@@ -147,7 +147,13 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            log.LogWarning($"Email send status: {result.Status.ToString()}");
+            if (result.Status != EmailSendStatus.Succeeded)
+            {
+                log.LogError("---------- DUES EMAIL SEND FAILED ------------");
+                log.LogError($">>> {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, email: {duesEmailEvent.emailAddr}");
+                log.LogError($"Email send status: {result.Status.ToString()}");
+                throw new Exception("Dues email send failed");
+            }
 
             //----------------------------------------------------------------------------------------------------------------
             // Update the status of the Communications record indicating that the email has been SENT
@@ -216,7 +222,13 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            log.LogWarning($"Email send status: {result.Status.ToString()}");
+            if (result.Status != EmailSendStatus.Succeeded)
+            {
+                log.LogError("---------- PAYMENT EMAIL SEND FAILED ------------");
+                log.LogError($">>> {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, email: {duesEmailEvent.emailAddr}");
+                log.LogError($"Email send status: {result.Status.ToString()}");
+                throw new Exception("Payment email send failed");
+            }
 
             //----------------------------------------------------------------------------------------------------------------
             // Update the status of the Payment record indicating that the email has been SENT
