@@ -36,6 +36,7 @@ public class SendMailTrigger
             string returnMessage = string.Empty;
             // De-serialize the JSON string from the Event into the DuesEmailEvent object
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
+            log.LogWarning($"*** TEST {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, email: {duesEmailEvent.emailAddr}, type: {duesEmailEvent.mailType}");
             //log.LogWarning($"{eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
             //log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
 

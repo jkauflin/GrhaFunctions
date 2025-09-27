@@ -202,7 +202,7 @@ namespace GrhaWeb.Function
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
+                    new EmailAddress("johnkauflin@gmail.com", "John TEST")   // TEST
                 }
             );
                     //new EmailAddress(duesEmailEvent.emailAddr)
@@ -222,6 +222,7 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
+            log.LogWarning($"Email send status: {result.Status.ToString()}, Succeeded = {EmailSendStatus.Succeeded.ToString()}");
             if (result.Status != EmailSendStatus.Succeeded)
             {
                 log.LogError("---------- PAYMENT EMAIL SEND FAILED ------------");
