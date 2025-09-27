@@ -33,6 +33,7 @@ public class SendMailTrigger
         DuesEmailEvent duesEmailEvent = new DuesEmailEvent();
         try
         {
+            log.LogWarning("Begin SendMailTrigger function");
             string returnMessage = string.Empty;
             // De-serialize the JSON string from the Event into the DuesEmailEvent object
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
