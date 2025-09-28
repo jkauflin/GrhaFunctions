@@ -127,10 +127,11 @@ namespace GrhaWeb.Function
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
+                    new EmailAddress("johnkauflin@gmail.com")   // TEST
                 }
             );
                     //new EmailAddress(duesEmailEvent.emailAddr)
+                    //new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
 
             // Create the message
             var emailMessage = new EmailMessage(

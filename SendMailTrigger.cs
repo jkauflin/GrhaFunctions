@@ -39,7 +39,8 @@ public class SendMailTrigger
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
             log.LogWarning($"*** TEST {eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, email: {duesEmailEvent.emailAddr}, type: {duesEmailEvent.mailType}");
             //log.LogWarning($"{eventGridEvent.EventType}, parcelId: {duesEmailEvent.parcelId}, id: {duesEmailEvent.id}, totalDue: {duesEmailEvent.totalDue}, email: {duesEmailEvent.emailAddr}");
-            //log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
+            log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
+            log.LogWarning($"$$$ eventGridEvent = {eventGridEvent.ToString()}");
 
             bool paymentEmail = false;
             if (!string.IsNullOrEmpty(duesEmailEvent.mailType))
