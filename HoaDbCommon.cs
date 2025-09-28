@@ -115,6 +115,7 @@ namespace GrhaWeb.Function
                 htmlMessageStr += $"<br>{duesEmailEvent.helpNotes}<br>";
             }
 
+
             // Create the EmailClient
             var emailClient = new EmailClient(acsEmailConnStr);
 
@@ -203,10 +204,11 @@ namespace GrhaWeb.Function
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("johnkauflin@gmail.com", "John TEST")   // TEST
+                    new EmailAddress("johnkauflin@gmail.com")   // TEST
                 }
             );
                     //new EmailAddress(duesEmailEvent.emailAddr)
+                    //new EmailAddress("johnkauflin@gmail.com", "John TEST")   // TEST
 
             // Create the message
             var emailMessage = new EmailMessage(
