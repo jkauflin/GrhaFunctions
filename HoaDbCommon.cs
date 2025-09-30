@@ -225,7 +225,7 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            log.LogWarning($"Email send status: {result.Status.ToString()}, Succeeded = {EmailSendStatus.Succeeded.ToString()}");
+            log.LogWarning($"Email send status: {result.Status.ToString()}, Succeeded = {EmailSendStatus.Succeeded.ToString()}, Id: {operation.Id}");
             if (result.Status != EmailSendStatus.Succeeded)
             {
                 log.LogError("---------- PAYMENT EMAIL SEND FAILED ------------");
