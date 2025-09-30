@@ -1,5 +1,3 @@
-// Default URL for triggering event grid function in the local environment.
-// http://localhost:7071/runtime/webhooks/EventGrid?functionName={functionname}
 
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
@@ -14,12 +12,12 @@ namespace GrhaWeb.Function;
 
 public class SendEmail
 {
-    private readonly ILogger<SendMailTrigger> log;
+    private readonly ILogger<SendEmail> log;
     private readonly IConfiguration config;
     private readonly CommonUtil util;
     private readonly HoaDbCommon hoaDbCommon;
 
-    public SendEmail(ILogger<SendMailTrigger> logger, IConfiguration configuration)
+    public SendEmail(ILogger<SendEmail> logger, IConfiguration configuration)
     {
         log = logger;
         config = configuration;
@@ -34,7 +32,7 @@ public class SendEmail
         try
         {
             log.LogWarning("Begin SendEmailTrigger function");
-            string returnMessage = "SendEmail function called";
+            string returnMessage = "";
             // De-serialize the JSON string from the Event into the DuesEmailEvent object
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
             log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
@@ -50,11 +48,11 @@ public class SendEmail
 
             if (paymentEmail)
             {
-                //returnMessage = await hoaDbCommon.SendPaymentEmail(duesEmailEvent);
+                returnMessage = await hoaDbCommon.SendPaymentEmail(duesEmailEvent);
             }
             else
             {
-                //returnMessage = await hoaDbCommon.SendEmailandUpdateRecs(duesEmailEvent);
+                returnMessage = await hoaDbCommon.SendEmailandUpdateRecs(duesEmailEvent);
             }
 
             log.LogWarning(returnMessage);
