@@ -28,6 +28,8 @@ Modification History
 2025-09-01 JJK  Copied from the GrhaWeb and modified for the functions 
                 needed for the GrhaFunctions
 2025-09-22 JJK  Added SendPaymentEmail function
+2025-09-30 JJK  Fixed some bugs and modified to return the email Id from ACS
+                *** Turned on sending to actual email address (commented out test) ***
 ================================================================================*/
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
@@ -128,11 +130,9 @@ namespace GrhaWeb.Function
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("johnkauflin@gmail.com")   // TEST
+                    new EmailAddress(duesEmailEvent.emailAddr)
                 }
             );
-                    //new EmailAddress(duesEmailEvent.emailAddr)
-                    //new EmailAddress("johnkauflin@gmail.com", "John Name")   // TEST
 
             // Create the message
             var emailMessage = new EmailMessage(
@@ -177,7 +177,7 @@ namespace GrhaWeb.Function
                 patchArray
             );
 
-            returnMessage = $"Successfully sent email and updated comm rec, Parcel_ID = {duesEmailEvent.parcelId}";
+            returnMessage = $"Successfully sent email and updated comm rec, Parcel_ID = {duesEmailEvent.parcelId}, email Id: {operation.Id}";
             return returnMessage;
         }
 
@@ -204,11 +204,9 @@ namespace GrhaWeb.Function
             var emailRecipients = new EmailRecipients(
                 to: new List<EmailAddress>
                 {
-                    new EmailAddress("johnkauflin@gmail.com")   // TEST
+                    new EmailAddress(duesEmailEvent.emailAddr)
                 }
             );
-                    //new EmailAddress(duesEmailEvent.emailAddr)
-                    //new EmailAddress("johnkauflin@gmail.com", "John TEST")   // TEST
 
             // Create the message
             var emailMessage = new EmailMessage(
@@ -225,7 +223,7 @@ namespace GrhaWeb.Function
 
             // Check the result
             EmailSendResult result = operation.Value;
-            log.LogWarning($"Email send status: {result.Status.ToString()}, Succeeded = {EmailSendStatus.Succeeded.ToString()}, Id: {operation.Id}");
+            //log.LogWarning($"Email send status: {result.Status.ToString()}, Succeeded = {EmailSendStatus.Succeeded.ToString()}, Id: {operation.Id}");
             if (result.Status != EmailSendStatus.Succeeded)
             {
                 log.LogError("---------- PAYMENT EMAIL SEND FAILED ------------");
@@ -253,7 +251,7 @@ namespace GrhaWeb.Function
                 patchArray
             );
 
-            returnMessage = $"Successfully sent email and updated payments rec, Parcel_ID = {duesEmailEvent.parcelId}";
+            returnMessage = $"Successfully sent email and updated payments rec, Parcel_ID: {duesEmailEvent.parcelId}, email Id: {operation.Id}";
             return returnMessage;
         }
 

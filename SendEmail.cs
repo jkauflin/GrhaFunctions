@@ -1,5 +1,3 @@
-// Default URL for triggering event grid function in the local environment.
-// http://localhost:7071/runtime/webhooks/EventGrid?functionName={functionname}
 
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
@@ -12,14 +10,14 @@ using System.Threading.Tasks;
 
 namespace GrhaWeb.Function;
 
-public class SendMailTrigger
+public class SendEmail
 {
-    private readonly ILogger<SendMailTrigger> log;
+    private readonly ILogger<SendEmail> log;
     private readonly IConfiguration config;
     private readonly CommonUtil util;
     private readonly HoaDbCommon hoaDbCommon;
 
-    public SendMailTrigger(ILogger<SendMailTrigger> logger, IConfiguration configuration)
+    public SendEmail(ILogger<SendEmail> logger, IConfiguration configuration)
     {
         log = logger;
         config = configuration;
@@ -27,17 +25,17 @@ public class SendMailTrigger
         hoaDbCommon = new HoaDbCommon(log, config);
     }
 
-    [Function("SendMailTrigger")]
+    [Function("SendEmailTrigger")]
     public async Task Run([EventGridTrigger] EventGridEvent eventGridEvent)
     {
         DuesEmailEvent duesEmailEvent = new DuesEmailEvent();
         try
         {
-            log.LogWarning("Begin SendMailTrigger function");
-            string returnMessage = string.Empty;
+            log.LogWarning("Begin SendEmailTrigger function");
+            string returnMessage = "";
             // De-serialize the JSON string from the Event into the DuesEmailEvent object
             duesEmailEvent = eventGridEvent.Data.ToObjectFromJson<DuesEmailEvent>();
-            log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
+            //log.LogWarning($">>> duesEmailEvent = {duesEmailEvent.ToString()}");
 
             bool paymentEmail = false;
             if (!string.IsNullOrEmpty(duesEmailEvent.mailType))
