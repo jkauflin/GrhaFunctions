@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.3.0"
+  }
+}
